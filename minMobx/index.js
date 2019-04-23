@@ -1,5 +1,5 @@
+// import Index from './demo/defineProperty';
 import Index from './src/mobx';
-
 // function doSomething(name) {
 // 	console.log('Hello, ' + name);
 // }

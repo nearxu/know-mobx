@@ -1,43 +1,44 @@
-import {Observable} from './observable';
-import {createObservable} from './extendObservable';
-import {Computed} from './computed';
+import { Observable } from './observable';
+import { createObservable } from './extendObservable';
+import { Computed } from './computed';
 
-export function observable (target,name,descriptor){
+export function observable(target, name, descriptor) {
+    // var v = descriptor.initializer.call(this);
     var v;
-    if(descriptor){
+    if (descriptor) {
         v = descriptor.initializer.call(this);
-    }else {
-        v=target;
+    } else {
+        v = target;
     }
-    if(typeof v === 'object'){
+    if (typeof v === 'object') {
         createObservable(v);
     }
 
     var observable = new Observable(v);
 
     return {
-        enumerable:true,
-        configurable:true,
-        get:function(){
+        enumerable: true,
+        configurable: true,
+        get: function () {
             return observable.get();
         },
-        set:function(v){
-            if(typeof v === 'object'){
-                createObservable(v);
+        set: function (value) {
+            if (typeof value === 'object') {
+                createObservable(value);
             }
             return observable.set(v);
         }
     }
 }
 
-export function computed(target,name,descriptor){
+export function computed(target, name, descriptor) {
     const getter = descriptor.get;
-    const computed = new Computed(target,getter);
+    const computed = new Computed(target, getter);
 
     return {
         enumerable: true,
         configurable: true,
-        get: function() {
+        get: function () {
             computed.target = this;
             return computed.get();
         }

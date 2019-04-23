@@ -1,42 +1,43 @@
 
-import {dependManager} from './dependManager';
+import { dependManager } from './dependManager';
 
 let obIDCount = 1;
 
-export class Observable{
+export class Observable {
     obID = 0;
-    value = null ; // real value
-    constructor(v){
-       this.obID = 'ob-'+(++obIDCount);
-       if(Array.isArray(v)){
-           this.wrapArrayProxy(v);
-       } else {
-           this.value = v;
-       }
-    }
-    get(){
-        dependManager.endCollect(this.obID);
-        return this.value;
-    }
-    set(v){
-        if(Array.isArray(v)){
+    value = null; // real value
+    constructor(v) {
+        this.obID = 'ob-' + (++obIDCount);
+        if (Array.isArray(v)) {
             this.wrapArrayProxy(v);
-        }else {
+        } else {
             this.value = v;
         }
-        dependManager.trigger(v.obID)
+    }
+    get() {
+        dependManager.collect(this.obID);
+        return this.value;
+    }
+    set(v) {
+
+        if (Array.isArray(v)) {
+            this.wrapArrayProxy(v);
+        } else {
+            this.value = v;
+        }
+        dependManager.trigger(this.obID)
 
     }
-    trigger(){
+    trigger() {
         dependManager.trigger(this.obID);
     }
 
     // array proxy handle
-    wrapArrayProxy(v){
-        this.value = new Proxy(v,{
-            set:(obj,key,value) => {
+    wrapArrayProxy(v) {
+        this.value = new Proxy(v, {
+            set: (obj, key, value) => {
                 obj[key] = value;
-                if(key != 'length'){
+                if (key != 'length') {
                     this.trigger();
                 }
                 return true;

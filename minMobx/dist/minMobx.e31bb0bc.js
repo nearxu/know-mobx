@@ -167,7 +167,7 @@ var dependManager = {
 
     if (ds && ds.watchers) {
       ds.watchers.forEach(function (d) {
-        ds.call(ds.target || _this);
+        d.call(d.target || _this);
       });
     }
   }
@@ -231,7 +231,7 @@ function () {
   _createClass(Observable, [{
     key: "get",
     value: function get() {
-      _dependManager.dependManager.endCollect(this.obID);
+      _dependManager.dependManager.collect(this.obID);
 
       return this.value;
     }
@@ -244,7 +244,7 @@ function () {
         this.value = v;
       }
 
-      _dependManager.dependManager.trigger(v.obID);
+      _dependManager.dependManager.trigger(this.obID);
     }
   }, {
     key: "trigger",
@@ -371,10 +371,14 @@ function () {
   }, {
     key: "bindAutoReComputed",
     value: function bindAutoReComputed() {
+      var _this = this;
+
       if (!this.hasBindAutoReCompute) {
         this.hasBindAutoReCompute = true;
 
-        _dependManager.dependManager.beginCollect(this.reComputer);
+        _dependManager.dependManager.beginCollect(function () {
+          return _this.reComputer;
+        }, this);
 
         this.reComputer();
 
@@ -414,6 +418,7 @@ var _computed = require("./computed");
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function observable(target, name, descriptor) {
+  // var v = descriptor.initializer.call(this);
   var v;
 
   if (descriptor) {
@@ -433,9 +438,9 @@ function observable(target, name, descriptor) {
     get: function get() {
       return observable.get();
     },
-    set: function set(v) {
-      if (_typeof(v) === 'object') {
-        (0, _extendObservable.createObservable)(v);
+    set: function set(value) {
+      if (_typeof(value) === 'object') {
+        (0, _extendObservable.createObservable)(value);
       }
 
       return observable.set(v);
@@ -467,19 +472,7 @@ var _autorun = require("./autorun");
 
 var _decorator = require("./decorator");
 
-var _class, _descriptor, _temp;
-
-function _initializerDefineProperty(target, property, descriptor, context) { if (!descriptor) return; Object.defineProperty(target, property, { enumerable: descriptor.enumerable, configurable: descriptor.configurable, writable: descriptor.writable, value: descriptor.initializer ? descriptor.initializer.call(context) : void 0 }); }
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-function _applyDecoratedDescriptor(target, property, decorators, descriptor, context) { var desc = {}; Object.keys(descriptor).forEach(function (key) { desc[key] = descriptor[key]; }); desc.enumerable = !!desc.enumerable; desc.configurable = !!desc.configurable; if ('value' in desc || desc.initializer) { desc.writable = true; } desc = decorators.slice().reverse().reduce(function (desc, decorator) { return decorator(target, property, desc) || desc; }, desc); if (context && desc.initializer !== void 0) { desc.value = desc.initializer ? desc.initializer.call(context) : void 0; desc.initializer = undefined; } if (desc.initializer === void 0) { Object.defineProperty(target, property, desc); desc = null; } return desc; }
-
-function _initializerWarningHelper(descriptor, context) { throw new Error('Decorating class property failed. Please ensure that ' + 'proposal-class-properties is enabled and set to use loose mode. ' + 'To use proposal-class-properties in spec mode with decorators, wait for ' + 'the next major version of decorators in stage 2.'); }
 
 // let count = observable({number:0});
 // autorun(() => {
@@ -498,55 +491,41 @@ function _initializerWarningHelper(descriptor, context) { throw new Error('Decor
 // autorun(() => {
 //     console.log(store.msg)
 // });
-// const counter = observable(0);
-// const foo = observable(0);
-// const bar = observable(0);
-// autorun(() => {
-//   if (counter.get() === 0) {
-//     console.log('foo', foo.get());
-//   } else {
-//     console.log('bar', bar.get());
-//   }
-// });
-// bar.set(10);    // 不触发 autorun
-// counter.set(1); // 触发 autorun
-// foo.set(100);   // 不触发 autorun
-// bar.set(100);   // 触发 autorun
-var Person = (_class = (_temp =
-/*#__PURE__*/
-function () {
-  function Person() {
-    _classCallCheck(this, Person);
-
-    _initializerDefineProperty(this, "name", _descriptor, this);
-  }
-
-  _createClass(Person, [{
-    key: "age",
-    get: function get() {
-      return this.name.key.key;
-    }
-  }]);
-
-  return Person;
-}(), _temp), (_descriptor = _applyDecoratedDescriptor(_class.prototype, "name", [_decorator.observable], {
-  configurable: true,
-  enumerable: true,
-  writable: true,
-  initializer: function initializer() {
-    return {
-      key: {
-        key: 1
-      }
-    };
-  }
-}), _applyDecoratedDescriptor(_class.prototype, "age", [_decorator.computed], Object.getOwnPropertyDescriptor(_class.prototype, "age"), _class.prototype)), _class);
-var person = new Person();
+var counter = (0, _decorator.observable)(0);
+var foo = (0, _decorator.observable)(0);
+var bar = (0, _decorator.observable)(0);
 (0, _autorun.autorun)(function () {
-  console.log(person.age);
+  if (counter.get() === 0) {
+    console.log('foo', foo.get());
+  } else {
+    console.log('bar', bar.get());
+  }
 });
-person.name.key.key = 3;
-person.name.key.key = 4;
+bar.set(10); // 不触发 autorun
+
+counter.set(1); // 触发 autorun
+
+foo.set(100); // 不触发 autorun
+
+bar.set(100); // 触发 autorun
+// class Person {
+//   @observable
+//   name = {
+//     key: {
+//       key: 1
+//     }
+//   };
+//   @computed get age() {
+//     return this.name.key.key;
+//   }
+// }
+// const person = new Person();
+// console.log(person.name.key)
+// autorun(function () {
+//   console.log(person.age);
+// })
+// person.name.key.key = 3;
+// person.name.key.key = 4;
 
 var Index = function Index() {
   _classCallCheck(this, Index);
@@ -559,7 +538,7 @@ exports.default = Index;
 var _mobx = _interopRequireDefault(require("./src/mobx"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-},{"./src/mobx":"src/mobx.js"}],"../../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./src/mobx":"src/mobx.js"}],"C:/Users/nearxu/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -587,7 +566,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53467" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55703" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
@@ -762,5 +741,5 @@ function hmrAcceptRun(bundle, id) {
     return true;
   }
 }
-},{}]},{},["../../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","index.js"], null)
+},{}]},{},["C:/Users/nearxu/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","index.js"], null)
 //# sourceMappingURL=/minMobx.e31bb0bc.js.map

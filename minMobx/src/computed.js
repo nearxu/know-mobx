@@ -1,4 +1,4 @@
-import {dependManager} from './dependManager';
+import { dependManager } from './dependManager';
 
 var cpIDCount = 1;
 
@@ -11,27 +11,27 @@ export class Computed {
 
     hasBindAutoReCompute = false;
 
-    obID = 0 ;
+    obID = 0;
 
-    constructor(target,getter){
-        this.cpID = 'cp-'+(++cpIDCount);
+    constructor(target, getter) {
+        this.cpID = 'cp-' + (++cpIDCount);
         this.target = target;
         this.getter = getter;
     }
 
-    reComputer(){
+    reComputer() {
         this.value = this.getter.call(this.target);
         dependManager.trigger(this.cpID);
     }
-    bindAutoReComputed(){
-        if(!this.hasBindAutoReCompute){
+    bindAutoReComputed() {
+        if (!this.hasBindAutoReCompute) {
             this.hasBindAutoReCompute = true;
-            dependManager.beginCollect(this.reComputer);
+            dependManager.beginCollect(() => this.reComputer, this);
             this.reComputer();
             dependManager.endCollect();
         }
     }
-    get(){
+    get() {
         this.bindAutoReComputed();
         dependManager.collect(this.cpID);
         return this.value;
